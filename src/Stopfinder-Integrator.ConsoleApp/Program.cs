@@ -60,13 +60,19 @@ class Program
 
         Console.WriteLine("🔹 Getting bus schedule...");
         var schedules = await api.GetScheduleAsync(tokenResponse.Token, version.ClientId, DateTime.Today, DateTime.Today.AddDays(1));
-
-        foreach (var s in schedules)
+        foreach (var day in schedules)
         {
-            Console.WriteLine($"Student: {s.StudentName}");
-            foreach (var bus in s.Schedules)
+            Console.WriteLine($"Date: {day.Date:d}");
+            foreach (var student in day.StudentSchedules)
             {
-                Console.WriteLine($"  {bus.Date:d} | {bus.Route} | {bus.StopName} | Pickup {bus.PickupTime} | Dropoff {bus.DropoffTime}");
+                Console.WriteLine($"  Student: {student.FirstName} {student.LastName}");
+                foreach (var trip in student.Trips)
+                {
+                    Console.WriteLine($"    Trip: {trip.Name}");
+                    Console.WriteLine($"      Bus: {trip.BusNumber}");
+                    Console.WriteLine($"      Pickup: {trip.PickUpStopName} at {trip.PickUpTime}");
+                    Console.WriteLine($"      Dropoff: {trip.DropOffStopName} at {trip.DropOffTime}");
+                }
             }
         }
     }

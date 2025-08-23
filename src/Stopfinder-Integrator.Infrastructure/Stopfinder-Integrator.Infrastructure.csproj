@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MQTTnet" Version="5.0.1.1416" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Stopfinder-Integrator.Core\Stopfinder-Integrator.Core.csproj" />
   </ItemGroup>
 

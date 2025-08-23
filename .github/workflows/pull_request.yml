@@ -1,0 +1,65 @@
+name: CI Workflow
+
+on:
+  pull_request:
+    branches:
+      - '**'
+
+permissions:
+  contents: read
+  checks: write
+  security-events: write
+
+jobs:
+  test:
+    name: Run Tests with Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: 'csharp'
+
+    - name: Build solution
+      id: build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Run tests
+      run: dotnet test --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=TestResults.trx" --collect:"XPlat Code Coverage"
+      continue-on-error: true
+
+    - name: Report Test Results
+      uses: dorny/test-reporter@v1
+      continue-on-error: true
+      with:
+        name: Test Results
+        path: "**/TestResults.trx"
+        reporter: dotnet-trx
+        fail-on-error: 'true'
+
+    - name: Install ReportGenerator
+      run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+    - name: Generate Coverage Report
+      run: |
+        reportgenerator -reports:"tests/**/coverage.cobertura.xml" -targetdir:"TestResults/CoverageReport" -reporttypes:"HtmlInline_AzurePipelines;Cobertura"
+
+    - name: Upload coverage to CodeCov
+      uses: codecov/codecov-action@v5
+      with:
+        files: TestResults/CoverageReport/Cobertura.xml
+        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      if: steps.build.outcome == 'success'

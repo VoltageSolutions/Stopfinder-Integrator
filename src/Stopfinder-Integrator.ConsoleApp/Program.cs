@@ -8,84 +8,49 @@ class Program
     static async Task Main()
     {
         const string envFile = ".env";
-
         if (!File.Exists(envFile))
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("❌ Missing .env file. Please create one based on .env.example.");
-            Console.ResetColor();
-            return; // Gracefully exit
-        }
-
-        Env.Load(envFile);
-
-        var username = Environment.GetEnvironmentVariable("STOPFINDER_USERNAME");
-        var password = Environment.GetEnvironmentVariable("STOPFINDER_PASSWORD");
-        var baseUrl = Environment.GetEnvironmentVariable("TRANSFINDER_BASEURL");
-
-        if (string.IsNullOrWhiteSpace(username) ||
-            string.IsNullOrWhiteSpace(password) ||
-            string.IsNullOrWhiteSpace(baseUrl))
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("❌ One or more required environment variables are missing in .env file.");
+            Console.WriteLine("Missing .env file.");
             Console.ResetColor();
             return;
         }
 
-        Console.WriteLine("✅ Environment loaded successfully.");
+        Env.Load(envFile);
 
-        // Setup DI
         var services = new ServiceCollection();
-        services.AddHttpClient<IDataCollectionService, StopfinderAPI>(c =>
+
+        // Configure options from environment variables
+        services.Configure<StopfinderApiOptions>(opt =>
         {
-            c.BaseAddress = new Uri(baseUrl);
+            opt.Username = Environment.GetEnvironmentVariable("STOPFINDER_USERNAME") ?? "";
+            opt.Password = Environment.GetEnvironmentVariable("STOPFINDER_PASSWORD") ?? "";
+            opt.BaseUrl = Environment.GetEnvironmentVariable("TRANSFINDER_BASEURL") ?? "";
+        });
+        services.Configure<MqttPublisherOptions>(opt =>
+        {
+            opt.Server = Environment.GetEnvironmentVariable("MQTT_SERVER") ?? "";
+            opt.Port = int.TryParse(Environment.GetEnvironmentVariable("MQTT_PORT"), out var port) ? port : 1883;
+            opt.TopicPrefix = Environment.GetEnvironmentVariable("MQTT_TOPIC_PREFIX") ?? string.Empty;
+            opt.Username = Environment.GetEnvironmentVariable("MQTT_USERNAME");
+            opt.Password = Environment.GetEnvironmentVariable("MQTT_PASSWORD");
+            opt.TopicMode = Environment.GetEnvironmentVariable("MQTT_TOPIC_MODE") ?? "perBus";
         });
 
-        var provider = services.BuildServiceProvider();
-        var api = provider.GetRequiredService<IDataCollectionService>();
-
-        // Run steps
-        Console.WriteLine("Getting API base URL...");
-        var apiBase = await api.GetApiBaseUrlAsync();
-        //Console.WriteLine($"Base URL: {apiBase}");
-
-        Console.WriteLine("Authenticating...");
-        var tokenResponse = await api.AuthenticateAsync(username, password);
-        //Console.WriteLine($"Token: {tokenResponse.Token[..8]}...");
-
-        Console.WriteLine("Getting API version...");
-        var version = await api.GetApiVersionAsync(tokenResponse.Token);
-        //Console.WriteLine($"Client ID: {version.ClientId}, API: {version.ApiVersion}");
-
-        Console.WriteLine("Getting bus schedule...");
-		//var schedules = await api.GetScheduleAsync(tokenResponse.Token, version.ClientId, DateTime.Today, DateTime.Today.AddDays(1));
-		var schedules = await api.GetScheduleAsync(tokenResponse.Token, version.ClientId, DateTime.Today.AddDays(2), DateTime.Today.AddDays(3));
-		if (schedules != null)
+        // Register HttpClient and services
+        services.AddHttpClient<IDataCollectionService, StopfinderAPI>((provider, client) =>
         {
-            foreach (var day in schedules)
-            {
-                var dateStr = day?.Date?.ToString("d") ?? "(no date)";
-                Console.WriteLine($"Date: {dateStr}");
-                if (day?.StudentSchedules != null)
-                {
-                    foreach (var student in day.StudentSchedules)
-                    {
-                        var studentName = $"{student?.FirstName ?? "(no first)"} {student?.LastName ?? "(no last)"}";
-                        Console.WriteLine($"  Student: {studentName}");
-                        if (student?.Trips != null)
-                        {
-                            foreach (var trip in student.Trips)
-                            {
-                                Console.WriteLine($"    Trip: {trip?.Name ?? "(no name)"}");
-                                Console.WriteLine($"      Bus: {trip?.BusNumber ?? "(no bus)"}");
-                                Console.WriteLine($"      Pickup: {trip?.PickUpStopName ?? "(no pickup)"} at {trip?.PickUpTime?.ToString() ?? "(no time)"}");
-                                Console.WriteLine($"      Dropoff: {trip?.DropOffStopName ?? "(no dropoff)"} at {trip?.DropOffTime?.ToString() ?? "(no time)"}");
-                            }
-                        }
-                    }
-                }
-            }
-        }
+            var options = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<StopfinderApiOptions>>().Value;
+            client.BaseAddress = new Uri(options.BaseUrl);
+        });
+        services.AddSingleton<IDataPublishingService, ConsolePublishingService>();
+        //services.AddSingleton<IDataPublishingService, MqttPublisher>();
+
+        // Build and run integrator
+        var provider = services.BuildServiceProvider();
+        var dataService = provider.GetRequiredService<IDataCollectionService>();
+        var publishers = provider.GetServices<IDataPublishingService>();
+        var integrator = new DataIntegrator(dataService, publishers);
+        await integrator.RunAsync();
     }
 }

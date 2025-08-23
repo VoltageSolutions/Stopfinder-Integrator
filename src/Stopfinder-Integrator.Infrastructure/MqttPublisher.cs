@@ -8,8 +8,20 @@ using StopfinderIntegrator.Core;
 
 namespace StopfinderIntegrator.Infrastructure
 {
-    public class MqttPublisher : IMqttPublisher
+    public class MqttPublisher : IDataPublishingService
     {
+        public async Task PublishLogAsync(string message)
+        {
+            var topic = $"{_topicPrefix}/log";
+            var payload = JsonSerializer.Serialize(new { message, timestamp = DateTime.UtcNow });
+            var mqttMessage = new MqttApplicationMessageBuilder()
+                .WithTopic(topic)
+                .WithPayload(payload)
+                .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce)
+                .Build();
+            await _client.PublishAsync(mqttMessage, CancellationToken.None);
+        }
+    
         private readonly IMqttClient _client;
         private readonly string _topicPrefix;
         private readonly bool _perChild;

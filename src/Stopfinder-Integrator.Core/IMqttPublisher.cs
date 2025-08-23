@@ -3,24 +3,8 @@ using System.Threading.Tasks;
 
 namespace StopfinderIntegrator.Core
 {
-    public interface IMqttPublisher
+    public interface IMqttPublisher : IDataPublishingService
     {
-        Task PublishPickupAsync(
-            string busNumber,
-            string pickUpStopName,
-            DateTime pickUpTime,
-            string dropOffStopName,
-            DateTime dropOffTime,
-            string? childName = null
-        );
-
-        Task PublishDropoffAsync(
-            string busNumber,
-            string pickUpStopName,
-            DateTime pickUpTime,
-            string dropOffStopName,
-            DateTime dropOffTime,
-            string? childName = null
-        );
+        // Inherits all publishing methods, can add MQTT-specific methods if needed
     }
 }

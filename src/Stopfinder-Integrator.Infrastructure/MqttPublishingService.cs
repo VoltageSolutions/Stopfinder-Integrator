@@ -8,7 +8,7 @@ using StopfinderIntegrator.Core;
 
 namespace StopfinderIntegrator.Infrastructure
 {
-    public class MqttPublisher : IDataPublishingService
+    public class MqttPublishingService : IDataPublishingService
     {
         public async Task PublishLogAsync(string message)
         {
@@ -26,7 +26,7 @@ namespace StopfinderIntegrator.Infrastructure
         private readonly string _topicPrefix;
         private readonly bool _perChild;
 
-        public MqttPublisher(string server, int port, string topicPrefix, bool perChild, string? username = null, string? password = null)
+        public MqttPublishingService(string server, int port, string topicPrefix, bool perChild, string? username = null, string? password = null)
         {
             _topicPrefix = topicPrefix.TrimEnd('/');
             _perChild = perChild;

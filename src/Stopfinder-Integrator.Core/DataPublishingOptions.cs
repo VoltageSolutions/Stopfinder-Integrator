@@ -1,6 +1,6 @@
 namespace StopfinderIntegrator.Core
 {
-    public class MqttPublisherOptions
+    public class DataPublishingOptions
     {
         public string Server { get; set; }
         public int Port { get; set; }

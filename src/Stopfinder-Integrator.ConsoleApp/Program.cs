@@ -21,13 +21,13 @@ class Program
         var services = new ServiceCollection();
 
         // Configure options from environment variables
-        services.Configure<StopfinderApiOptions>(opt =>
+        services.Configure<DataCollectionOptions>(opt =>
         {
             opt.Username = Environment.GetEnvironmentVariable("STOPFINDER_USERNAME") ?? "";
             opt.Password = Environment.GetEnvironmentVariable("STOPFINDER_PASSWORD") ?? "";
             opt.BaseUrl = Environment.GetEnvironmentVariable("TRANSFINDER_BASEURL") ?? "";
         });
-        services.Configure<MqttPublisherOptions>(opt =>
+        services.Configure<DataPublishingOptions>(opt =>
         {
             opt.Server = Environment.GetEnvironmentVariable("MQTT_SERVER") ?? "";
             opt.Port = int.TryParse(Environment.GetEnvironmentVariable("MQTT_PORT"), out var port) ? port : 1883;
@@ -38,9 +38,9 @@ class Program
         });
 
         // Register HttpClient and services
-        services.AddHttpClient<IDataCollectionService, StopfinderAPI>((provider, client) =>
+        services.AddHttpClient<IDataCollectionService, StopfinderCollectionService>((provider, client) =>
         {
-            var options = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<StopfinderApiOptions>>().Value;
+            var options = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<DataCollectionOptions>>().Value;
             client.BaseAddress = new Uri(options.BaseUrl);
         });
         services.AddSingleton<IDataPublishingService, ConsolePublishingService>();

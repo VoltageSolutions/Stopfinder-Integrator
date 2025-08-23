@@ -3,14 +3,14 @@ using StopfinderIntegrator.Core.DTO;
 using System.Net.Http.Json;
 namespace StopfinderIntegrator.Infrastructure;
 
-public class StopfinderAPI : IDataCollectionService
+public class StopfinderCollectionService : IDataCollectionService
 {
     private readonly HttpClient _http;
     private readonly string _transfinderBaseUrl;
     private readonly DataCollectionOptions _options;
     private string? _stopfinderBaseUrl;
 
-    public StopfinderAPI(HttpClient http, Microsoft.Extensions.Options.IOptions<DataCollectionOptions> options)
+    public StopfinderCollectionService(HttpClient http, Microsoft.Extensions.Options.IOptions<DataCollectionOptions> options)
     {
         _http = http;
         _options = options.Value;

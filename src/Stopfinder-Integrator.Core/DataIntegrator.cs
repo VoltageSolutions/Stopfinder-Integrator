@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
 namespace StopfinderIntegrator.Core
 {
     public class DataIntegrator
@@ -23,7 +18,8 @@ namespace StopfinderIntegrator.Core
             var baseUrl = await _dataService.GetApiBaseUrlAsync();
             var token = await _dataService.AuthenticateAsync();
             var version = await _dataService.GetApiVersionAsync(token.Token);
-            var schedules = await _dataService.GetScheduleAsync(token.Token, version.ClientId, DateTime.Today, DateTime.Today.AddDays(1));
+            //var schedules = await _dataService.GetScheduleAsync(token.Token, version.ClientId, DateTime.Today, DateTime.Today.AddDays(1));
+            var schedules = await _dataService.GetScheduleAsync(token.Token, version.ClientId, DateTime.Today.AddDays(2), DateTime.Today.AddDays(3));
 
             foreach (var day in schedules ?? Enumerable.Empty<DTO.ScheduleResponse>())
             {

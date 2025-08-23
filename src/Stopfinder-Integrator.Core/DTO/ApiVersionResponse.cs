@@ -1,4 +1,4 @@
-﻿namespace Stopfinder_Integrator.Core.DTO
+﻿namespace StopfinderIntegrator.Core.DTO
 {
     public record ApiVersionResponse(
         string ClientId,

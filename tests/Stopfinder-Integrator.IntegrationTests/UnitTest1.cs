@@ -1,4 +1,4 @@
-﻿namespace Stopfinder_Integrator.IntegrationTests;
+﻿namespace StopfinderIntegrator.IntegrationTests;
 
 public class UnitTest1
 {

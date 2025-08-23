@@ -1,6 +1,6 @@
-﻿using Stopfinder_Integrator.Core.DTO;
+﻿using StopfinderIntegrator.Core.DTO;
 
-namespace Stopfinder_Integrator.Core
+namespace StopfinderIntegrator.Core
 {
     public interface IDataCollectionService
     {

@@ -1,7 +1,7 @@
 ﻿using DotNetEnv;
 using Microsoft.Extensions.DependencyInjection;
-using Stopfinder_Integrator.Core;
-using Stopfinder_Integrator.Infrastructure;
+using StopfinderIntegrator.Core;
+using StopfinderIntegrator.Infrastructure;
 
 class Program
 {
@@ -46,32 +46,44 @@ class Program
         var api = provider.GetRequiredService<IDataCollectionService>();
 
         // Run steps
-        Console.WriteLine("🔹 Getting API base URL...");
+        Console.WriteLine("Getting API base URL...");
         var apiBase = await api.GetApiBaseUrlAsync();
-        Console.WriteLine($"Base URL: {apiBase}");
+        //Console.WriteLine($"Base URL: {apiBase}");
 
-        Console.WriteLine("🔹 Authenticating...");
+        Console.WriteLine("Authenticating...");
         var tokenResponse = await api.AuthenticateAsync(username, password);
-        Console.WriteLine($"Token: {tokenResponse.Token[..8]}...");
+        //Console.WriteLine($"Token: {tokenResponse.Token[..8]}...");
 
-        Console.WriteLine("🔹 Getting API version...");
+        Console.WriteLine("Getting API version...");
         var version = await api.GetApiVersionAsync(tokenResponse.Token);
-        Console.WriteLine($"Client ID: {version.ClientId}, API: {version.ApiVersion}");
+        //Console.WriteLine($"Client ID: {version.ClientId}, API: {version.ApiVersion}");
 
-        Console.WriteLine("🔹 Getting bus schedule...");
-        var schedules = await api.GetScheduleAsync(tokenResponse.Token, version.ClientId, DateTime.Today, DateTime.Today.AddDays(1));
-        foreach (var day in schedules)
+        Console.WriteLine("Getting bus schedule...");
+		//var schedules = await api.GetScheduleAsync(tokenResponse.Token, version.ClientId, DateTime.Today, DateTime.Today.AddDays(1));
+		var schedules = await api.GetScheduleAsync(tokenResponse.Token, version.ClientId, DateTime.Today.AddDays(2), DateTime.Today.AddDays(3));
+		if (schedules != null)
         {
-            Console.WriteLine($"Date: {day.Date:d}");
-            foreach (var student in day.StudentSchedules)
+            foreach (var day in schedules)
             {
-                Console.WriteLine($"  Student: {student.FirstName} {student.LastName}");
-                foreach (var trip in student.Trips)
+                var dateStr = day?.Date?.ToString("d") ?? "(no date)";
+                Console.WriteLine($"Date: {dateStr}");
+                if (day?.StudentSchedules != null)
                 {
-                    Console.WriteLine($"    Trip: {trip.Name}");
-                    Console.WriteLine($"      Bus: {trip.BusNumber}");
-                    Console.WriteLine($"      Pickup: {trip.PickUpStopName} at {trip.PickUpTime}");
-                    Console.WriteLine($"      Dropoff: {trip.DropOffStopName} at {trip.DropOffTime}");
+                    foreach (var student in day.StudentSchedules)
+                    {
+                        var studentName = $"{student?.FirstName ?? "(no first)"} {student?.LastName ?? "(no last)"}";
+                        Console.WriteLine($"  Student: {studentName}");
+                        if (student?.Trips != null)
+                        {
+                            foreach (var trip in student.Trips)
+                            {
+                                Console.WriteLine($"    Trip: {trip?.Name ?? "(no name)"}");
+                                Console.WriteLine($"      Bus: {trip?.BusNumber ?? "(no bus)"}");
+                                Console.WriteLine($"      Pickup: {trip?.PickUpStopName ?? "(no pickup)"} at {trip?.PickUpTime?.ToString() ?? "(no time)"}");
+                                Console.WriteLine($"      Dropoff: {trip?.DropOffStopName ?? "(no dropoff)"} at {trip?.DropOffTime?.ToString() ?? "(no time)"}");
+                            }
+                        }
+                    }
                 }
             }
         }

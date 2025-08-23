@@ -1,34 +1,44 @@
-﻿using Stopfinder_Integrator.Core;
-using Stopfinder_Integrator.Core.DTO;
+﻿using StopfinderIntegrator.Core;
+using StopfinderIntegrator.Core.DTO;
 using System.Net.Http.Json;
-namespace Stopfinder_Integrator.Infrastructure;
+namespace StopfinderIntegrator.Infrastructure;
 
 public class StopfinderAPI : IDataCollectionService
 {
-
     private readonly HttpClient _http;
-    private string? _apiBaseUrl;
+    private readonly string transfinderBaseUrl;
+    private string? stopfinderBaseUrl;
 
     public StopfinderAPI(HttpClient http)
     {
         _http = http;
+        // Use the BaseAddress set in DI as the transfinderBaseUrl
+        transfinderBaseUrl = http.BaseAddress?.ToString() ?? throw new InvalidOperationException("TRANSFINDER_BASEURL is not set in HttpClient BaseAddress.");
     }
 
     public async Task<string> GetApiBaseUrlAsync()
     {
-        var url = "https://www.mytransfinder.com/$xcom/getStopfinder.asp?/email=test";
-        var response = await _http.GetStringAsync(url);
+        // Use the HttpClient's BaseAddress and a relative path
+        var response = await _http.GetStringAsync("$xcom/getStopfinder.asp?/email=test");
         var apiBase = response.Trim();
         // Ensure trailing slash for correct URI joining
         if (!apiBase.EndsWith("/"))
             apiBase += "/";
-        _apiBaseUrl = apiBase;
+        stopfinderBaseUrl = apiBase;
         return apiBase;
+    }
+
+    public static string GenerateDeviceId()
+    {
+        var bytes = new byte[8]; // 8 bytes = 16 hex characters
+        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        rng.GetBytes(bytes);
+        return BitConverter.ToString(bytes).Replace("-", string.Empty).ToLowerInvariant();
     }
 
     public async Task<TokenResponse> AuthenticateAsync(string username, string password)
     {
-        if (string.IsNullOrWhiteSpace(_apiBaseUrl))
+        if (string.IsNullOrWhiteSpace(stopfinderBaseUrl))
             throw new InvalidOperationException("API base URL not set. Call GetApiBaseUrlAsync first.");
 
         var body = new
@@ -36,11 +46,11 @@ public class StopfinderAPI : IDataCollectionService
             grantType = "password",
             username,
             password,
-            deviceId = "a25922e47946a8dc",
+            deviceId = GenerateDeviceId(),
             rfApiVersion = "1.1"
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(_apiBaseUrl), "tokens"))
+        var request = new HttpRequestMessage(HttpMethod.Post, new Uri(new Uri(stopfinderBaseUrl), "tokens"))
         {
             Content = JsonContent.Create(body)
         };
@@ -59,7 +69,7 @@ public class StopfinderAPI : IDataCollectionService
         request.Headers.Add("Sec-Fetch-Dest", "empty");
         request.Headers.Add("Sec-Fetch-Mode", "cors");
         request.Headers.Add("Sec-Fetch-Site", "cross-site");
-        request.Headers.Add("Token", "");
+        //request.Headers.Add("Token", "");
         request.Headers.Add("User-Agent", "Mozilla/5.0 (Linux; Android 15; sdk_gphone64_x86_64 Build/AP31.240617.003; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/124.0.6367.219 Mobile Safari/537.36");
         request.Headers.Add("X-Requested-With", "com.transfinder.stopfinder");
         request.Headers.Add("X-StopfinderApp-Version", "3.1.0");
@@ -73,13 +83,16 @@ public class StopfinderAPI : IDataCollectionService
 
     public async Task<ApiVersionResponse> GetApiVersionAsync(string token)
     {
-        if (string.IsNullOrWhiteSpace(_apiBaseUrl))
+        if (string.IsNullOrWhiteSpace(stopfinderBaseUrl))
             throw new InvalidOperationException("API base URL not set. Call GetApiBaseUrlAsync first.");
 
-    var req = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(_apiBaseUrl), "systems/apiversions"));
-        req.Headers.Add("Token", token);
+        if (string.IsNullOrWhiteSpace(token))
+            throw new InvalidOperationException("Token is required");
 
-        var response = await _http.SendAsync(req);
+        var request = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(stopfinderBaseUrl), "systems/apiversions"));
+        request.Headers.Add("Token", token);
+
+        var response = await _http.SendAsync(request);
         response.EnsureSuccessStatusCode();
 
         var versions = await response.Content.ReadFromJsonAsync<List<ApiVersionResponse>>();
@@ -88,22 +101,22 @@ public class StopfinderAPI : IDataCollectionService
 
     public async Task<IEnumerable<ScheduleResponse>> GetScheduleAsync(string token, string clientId, DateTime start, DateTime end)
     {
-        if (string.IsNullOrWhiteSpace(_apiBaseUrl))
+        if (string.IsNullOrWhiteSpace(stopfinderBaseUrl))
             throw new InvalidOperationException("API base URL not set. Call GetApiBaseUrlAsync first.");
 
-    var url = $"students?dateStart={start:yyyy-MM-dd}&dateEnd={end:yyyy-MM-dd}";
-    var req = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(_apiBaseUrl), url));
+        if (string.IsNullOrWhiteSpace(token))
+            throw new InvalidOperationException("Token is required");
+
+        var url = $"students?dateStart={start:yyyy-MM-dd}&dateEnd={end:yyyy-MM-dd}";
+        var req = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(stopfinderBaseUrl), url));
         req.Headers.Add("Token", token);
         req.Headers.Add("X-Client-Keys", clientId);
 
         var response = await _http.SendAsync(req);
         response.EnsureSuccessStatusCode();
 
-
         var json = await response.Content.ReadAsStringAsync();
-        Console.WriteLine(json);
-        return null;
-        //var schedules = await response.Content.ReadFromJsonAsync<List<ScheduleResponse>>();
-        //return schedules ?? Enumerable.Empty<ScheduleResponse>();
+        var schedules = await response.Content.ReadFromJsonAsync<List<ScheduleResponse>>();
+        return schedules ?? Enumerable.Empty<ScheduleResponse>();
     }
 }

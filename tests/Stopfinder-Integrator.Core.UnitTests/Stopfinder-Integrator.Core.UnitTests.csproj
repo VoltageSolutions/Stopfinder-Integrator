@@ -19,4 +19,12 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DTO\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Stopfinder-Integrator.Core\Stopfinder-Integrator.Core.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -1,2 +1,2 @@
 # Stopfinder-Integrator
-This enables data from Stopfinder to be available to other applications and tools.
+This enables other applications to integrate with Transfinder's Stopfinder app to retrieve bus schedule information.

@@ -1,12 +1,11 @@
-﻿using StopfinderIntegrator.Core.DTO;
+﻿
+using StopfinderIntegrator.Core.Data;
 
 namespace StopfinderIntegrator.Core
 {
     public interface IDataCollectionService
     {
-        Task<string> GetApiBaseUrlAsync();
-        Task<TokenResponse> AuthenticateAsync();
-        Task<ApiVersionResponse> GetApiVersionAsync(string token);
-        Task<IEnumerable<ScheduleResponse>> GetScheduleAsync(string token, string clientId, DateTime start, DateTime end);
+        Task<bool> Initialize();
+        Task<IEnumerable<StudentSchedule>> GetScheduleAsync(DateTime start, DateTime end);
     }
 }

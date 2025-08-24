@@ -1,5 +1,5 @@
 ﻿using StopfinderIntegrator.Core;
-using StopfinderIntegrator.Core.DTO;
+using StopfinderIntegrator.Infrastructure.DTO;
 using System.Net.Http.Json;
 namespace StopfinderIntegrator.Infrastructure;
 
@@ -10,12 +10,32 @@ public class StopfinderCollectionService : IDataCollectionService
     private readonly DataCollectionOptions _options;
     private string? _stopfinderBaseUrl;
 
+    private string token;
+    private string clientId;
+
     public StopfinderCollectionService(HttpClient http, Microsoft.Extensions.Options.IOptions<DataCollectionOptions> options)
     {
         _http = http;
         _options = options.Value;
         // Use the BaseAddress set in DI as the transfinderBaseUrl
         _transfinderBaseUrl = http.BaseAddress?.ToString() ?? throw new InvalidOperationException("TRANSFINDER_BASEURL is not set in HttpClient BaseAddress.");
+    }
+
+    public async Task<bool> Initialize()
+    {
+        try
+        {
+            await GetApiBaseUrlAsync();
+            var tokenResponse = await AuthenticateAsync();
+            token = tokenResponse.Token ?? throw new InvalidOperationException("AccessToken is null in token response.");
+            var apiVersionResponse = await GetApiVersionAsync(token);
+            clientId = apiVersionResponse.ClientId ?? throw new InvalidOperationException("ClientId is null in API version response.");
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task<string> GetApiBaseUrlAsync()
@@ -120,5 +140,31 @@ public class StopfinderCollectionService : IDataCollectionService
         var json = await response.Content.ReadAsStringAsync();
         var schedules = await response.Content.ReadFromJsonAsync<List<ScheduleResponse>>();
         return schedules ?? Enumerable.Empty<ScheduleResponse>();
+    }
+
+    public async Task<IEnumerable<StopfinderIntegrator.Core.Data.StudentSchedule>> GetScheduleAsync(DateTime start, DateTime end)
+    {
+        var scheduleResponses = await GetScheduleAsync(token, clientId, start, end); // IEnumerable<ScheduleResponse>
+        var allStudentSchedules = scheduleResponses
+            .Where(sr => sr.StudentSchedules != null)
+            .SelectMany(sr => sr.StudentSchedules!);
+
+        var result = allStudentSchedules.Select(dto => new StopfinderIntegrator.Core.Data.StudentSchedule
+        {
+            FirstName = dto.FirstName ?? string.Empty,
+            LastName = dto.LastName ?? string.Empty,
+            Grade = dto.Grade ?? string.Empty,
+            School = dto.School ?? string.Empty,
+            Trips = dto.Trips?.Select(tripDto => new StopfinderIntegrator.Core.Data.Trip
+            {
+                Name = tripDto.Name ?? string.Empty,
+                BusNumber = tripDto.BusNumber ?? string.Empty,
+                PickUpTime = tripDto.PickUpTime,
+                PickUpStopName = tripDto.PickUpStopName ?? string.Empty,
+                DropOffTime = tripDto.DropOffTime,
+                DropOffStopName = tripDto.DropOffStopName ?? string.Empty
+            }).ToList() ?? new List<StopfinderIntegrator.Core.Data.Trip>()
+        });
+        return result;
     }
 }

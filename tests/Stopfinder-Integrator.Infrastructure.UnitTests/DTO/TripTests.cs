@@ -1,7 +1,7 @@
-using StopfinderIntegrator.Core.DTO;
+using StopfinderIntegrator.Infrastructure.DTO;
 using System.Text.Json;
 
-namespace StopfinderIntegrator.Core.UnitTests.DTO
+namespace StopfinderIntegrator.Infrastructure.UnitTests.DTO
 {
     public class TripTests
     {

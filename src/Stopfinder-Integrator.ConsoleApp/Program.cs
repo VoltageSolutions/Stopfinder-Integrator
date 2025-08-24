@@ -44,7 +44,7 @@ class Program
             client.BaseAddress = new Uri(options.BaseUrl);
         });
         services.AddSingleton<IDataPublishingService, ConsolePublishingService>();
-        //services.AddSingleton<IDataPublishingService, MqttPublisher>();
+        //services.AddSingleton<IDataPublishingService, MqttPublishingService>();
 
         // Build and run integrator
         var provider = services.BuildServiceProvider();

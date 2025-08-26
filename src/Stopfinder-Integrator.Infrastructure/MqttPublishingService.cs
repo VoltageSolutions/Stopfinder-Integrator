@@ -38,18 +38,18 @@ namespace StopfinderIntegrator.Infrastructure
             await _client.PublishAsync(mqttMessage, CancellationToken.None);
         }
 
-        public async Task PublishPickupAsync(string busNumber, string pickUpStopName, DateTime pickUpTime, string dropOffStopName, DateTime dropOffTime, string? childName = null)
+        public async Task PublishPickupAsync(StopfinderIntegrator.Core.Data.Trip trip, string? childName = null)
         {
             var topic = _perChild
                 ? $"{_topicPrefix}/{childName}/pickup"
-                : $"{_topicPrefix}/{busNumber}/pickup";
+                : $"{_topicPrefix}/{trip.BusNumber}/pickup";
             var payload = JsonSerializer.Serialize(new
             {
-                busNumber,
-                pickUpStopName,
-                pickUpTime,
-                dropOffStopName,
-                dropOffTime,
+                trip.BusNumber,
+                trip.PickUpStopName,
+                trip.PickUpTime,
+                trip.DropOffStopName,
+                trip.DropOffTime,
                 childName
             });
             var message = new MqttApplicationMessageBuilder()
@@ -60,18 +60,18 @@ namespace StopfinderIntegrator.Infrastructure
             await _client.PublishAsync(message, CancellationToken.None);
         }
 
-        public async Task PublishDropoffAsync(string busNumber, string pickUpStopName, DateTime pickUpTime, string dropOffStopName, DateTime dropOffTime, string? childName = null)
+        public async Task PublishDropoffAsync(StopfinderIntegrator.Core.Data.Trip trip, string? childName = null)
         {
             var topic = _perChild
                 ? $"{_topicPrefix}/{childName}/dropoff"
-                : $"{_topicPrefix}/{busNumber}/dropoff";
+                : $"{_topicPrefix}/{trip.BusNumber}/dropoff";
             var payload = JsonSerializer.Serialize(new
             {
-                busNumber,
-                pickUpStopName,
-                pickUpTime,
-                dropOffStopName,
-                dropOffTime,
+                trip.BusNumber,
+                trip.PickUpStopName,
+                trip.PickUpTime,
+                trip.DropOffStopName,
+                trip.DropOffTime,
                 childName
             });
             var message = new MqttApplicationMessageBuilder()

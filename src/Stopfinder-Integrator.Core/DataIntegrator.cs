@@ -30,25 +30,11 @@ namespace StopfinderIntegrator.Core
                         // For now, treat all as pickup if PickUpTime is before DropOffTime, else dropoff
                         if (trip.PickUpTime.HasValue && trip.DropOffTime.HasValue && trip.PickUpTime <= trip.DropOffTime)
                         {
-                            await publisher.PublishPickupAsync(
-                                trip.BusNumber ?? string.Empty,
-                                trip.PickUpStopName ?? string.Empty,
-                                trip.PickUpTime ?? DateTime.MinValue,
-                                trip.DropOffStopName ?? string.Empty,
-                                trip.DropOffTime ?? DateTime.MinValue,
-                                student.FirstName + " " + student.LastName
-                            );
+                            await publisher.PublishPickupAsync(trip, student.FirstName + " " + student.LastName);
                         }
                         else
                         {
-                            await publisher.PublishDropoffAsync(
-                                trip.BusNumber ?? string.Empty,
-                                trip.PickUpStopName ?? string.Empty,
-                                trip.PickUpTime ?? DateTime.MinValue,
-                                trip.DropOffStopName ?? string.Empty,
-                                trip.DropOffTime ?? DateTime.MinValue,
-                                student.FirstName + " " + student.LastName
-                            );
+                            await publisher.PublishDropoffAsync(trip, student.FirstName + " " + student.LastName);
                         }
                     }
                 }

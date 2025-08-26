@@ -4,15 +4,15 @@ namespace StopfinderIntegrator.Infrastructure
 {
     public class ConsolePublishingService : IDataPublishingService
     {
-        public Task PublishPickupAsync(string busNumber, string pickUpStopName, DateTime pickUpTime, string dropOffStopName, DateTime dropOffTime, string? childName = null)
+        public Task PublishPickupAsync(StopfinderIntegrator.Core.Data.Trip trip, string? childName = null)
         {
-            Console.WriteLine($"[Pickup] Bus: {busNumber}, Child: {childName}, Pickup: {pickUpStopName} at {pickUpTime}, Dropoff: {dropOffStopName} at {dropOffTime}");
+            Console.WriteLine($"[Pickup] Bus: {trip.BusNumber}, Child: {childName}, Pickup: {trip.PickUpStopName} at {trip.PickUpTime}, Dropoff: {trip.DropOffStopName} at {trip.DropOffTime}");
             return Task.CompletedTask;
         }
 
-        public Task PublishDropoffAsync(string busNumber, string pickUpStopName, DateTime pickUpTime, string dropOffStopName, DateTime dropOffTime, string? childName = null)
+        public Task PublishDropoffAsync(StopfinderIntegrator.Core.Data.Trip trip, string? childName = null)
         {
-            Console.WriteLine($"[Dropoff] Bus: {busNumber}, Child: {childName}, Pickup: {pickUpStopName} at {pickUpTime}, Dropoff: {dropOffStopName} at {dropOffTime}");
+            Console.WriteLine($"[Dropoff] Bus: {trip.BusNumber}, Child: {childName}, Pickup: {trip.PickUpStopName} at {trip.PickUpTime}, Dropoff: {trip.DropOffStopName} at {trip.DropOffTime}");
             return Task.CompletedTask;
         }
 

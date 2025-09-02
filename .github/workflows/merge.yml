@@ -43,7 +43,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
       - name: Save Linux Build Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: stopfinder-integrator-linux
           path: ./artifacts/stopfinder-integrator-linux.zip
@@ -77,7 +77,7 @@ jobs:
           Compress-Archive -Path artifacts\windows\* -DestinationPath artifacts\stopfinder-integrator-win.zip
 
       - name: Save Windows Build Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: stopfinder-integrator-win
           path: artifacts\stopfinder-integrator-win.zip

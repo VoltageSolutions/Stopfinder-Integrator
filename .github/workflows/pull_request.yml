@@ -68,3 +68,53 @@ jobs:
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       if: steps.build.outcome == 'success'
+
+    - name: Extract version from .csproj
+      id: get_version
+      shell: pwsh
+      run: |
+        $version = (Select-String -Path src/Stopfinder-Integrator.ConsoleApp/Stopfinder-Integrator.ConsoleApp.csproj -Pattern '<Version>(.*?)</Version>').Matches.Groups[1].Value
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+
+    - name: Check if tag for version exists (only for main)
+      if: github.event.pull_request.base.ref == 'main'
+      id: check_tag
+      shell: pwsh
+      run: |
+        $version = 'v${{ steps.get_version.outputs.version }}'
+        $tagExists = git tag --list | Where-Object { $_ -eq $version }
+        if ($tagExists) {
+          Write-Host "Tag already exists. $version is not a new app version."
+          echo "tag_exists=true" >> $env:GITHUB_ENV
+        } else {
+          Write-Host "Tag does not exist. $version is a new app version."
+          echo "tag_exists=false" >> $env:GITHUB_ENV
+        }
+
+    - name: Report Check as Status
+      if: github.event.pull_request.base.ref == 'main'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const tagExists = process.env.tag_exists === 'true';
+          
+          const conclusion = tagExists ? 'failure' : 'success';
+          const summary = tagExists
+            ? `Version v${{ steps.get_version.outputs.version }} already exists.`
+            : `New app version v${{ steps.get_version.outputs.version }}.`;
+          const message = tagExists
+            ? `There is already a tag and Release for version \`v${{ steps.get_version.outputs.version }}\`. Please update the version number in the application project file.`
+            : `Merging to \`main\` will create a new tag and release for version \`v${{ steps.get_version.outputs.version }}\`.`;
+
+          await github.rest.checks.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            name: "Version Check",
+            head_sha: context.payload.pull_request.head.sha,
+            status: "completed",
+            conclusion: conclusion,
+            output: {
+              title: summary,
+              summary: message,
+            },
+          });

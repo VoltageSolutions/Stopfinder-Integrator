@@ -6,6 +6,10 @@
     <RootNamespace>StopfinderIntegrator.ConsoleApp</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<Version>0.0.1</Version>
+	<RepositoryType>git</RepositoryType>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
+    <AssemblyName>Stopfinder-Integrator</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

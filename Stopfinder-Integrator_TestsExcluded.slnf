@@ -1,0 +1,10 @@
+{
+  "solution": {
+    "path": "Stopfinder-Integrator.sln",
+    "projects": [
+      "src\\Stopfinder-Integrator.Core\\Stopfinder-Integrator.Core.csproj",
+      "src\\Stopfinder-Integrator.Infrastructure\\Stopfinder-Integrator.Infrastructure.csproj",
+      "src\\Stopfinder-Integrator.ConsoleApp\\Stopfinder-Integrator.ConsoleApp.csproj"
+    ]
+  }
+}

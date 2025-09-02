@@ -52,3 +52,10 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Visual Studio cache (solution-specific settings & Copilot indices)
+.vs/
+
+# Environment files
+.env
+.env.*

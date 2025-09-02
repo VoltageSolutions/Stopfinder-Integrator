@@ -90,13 +90,13 @@ jobs:
     needs: [build-linux, build-windows]
     steps:
       - name: Download Linux Build Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: stopfinder-integrator-linux
           path: ./artifacts/linux
 
       - name: Download Windows Build Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: stopfinder-integrator-win
           path: ./artifacts/windows
